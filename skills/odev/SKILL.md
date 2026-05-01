@@ -11,10 +11,11 @@ This skill provides instructions on how to use `odev` (Odoo Development CLI) dur
 
 ## 🛑 MANDATORY RULES (ODEV CLI USAGE)
 
-1. **VERSIONING**: You MUST ALWAYS specify the Odoo version explicitly using the `-V <version>` flag for ALL `odev`
-   commands (like `odev run`, `odev create`, `odev test`). If you omit `-V`, `odev` defaults to the `master` version.
-   While this might be correct if you are targeting master, it is HIGHLY RECOMMENDED to always specify it to ensure the
-   correct environment and dependencies are used.
+1. **VERSIONING**: You MUST specify the Odoo version explicitly using the `-V <version>` flag when **creating** a 
+   database (`odev create`). For other commands like `odev run`, `odev shell`, or `odev test`, the `-V` flag is 
+   **optional** if the database already exists, as `odev` will automatically infer the version from the database.
+   However, if you are targeting a specific version that differs from the database or if the database does not exist,
+   specifying `-V` is required.
 
     - **Example**: `odev run -V 19.0 ...`
 
@@ -45,15 +46,16 @@ This skill provides instructions on how to use `odev` (Odoo Development CLI) dur
 
     -   Starts the Odoo server.
     -   Useful for manual verification and testing.
-    -   **MANDATORY**: You MUST always specify the Odoo version with `-V <version>` BEFORE the database name.
+    -   **DATABASE EXISTENCE**: The database MUST exist. If it does not, an error will be thrown.
+    -   **VERSIONING**: If `-V <version>` is omitted, `odev` takes the version from the database.
     -   **MANDATORY**: Always specify `--stop-after-init` when running in a script or for automated verification.
     -   **Best Practice**: Always specify `--http-port <free_port>` to avoid conflicts.
-    -   **Example**: `odev run -V 19.0 db -i mod --http-port 8069 --log-level=warn --stop-after-init`
+    -   **Example**: `odev run db -i mod --http-port 8069 --log-level=warn --stop-after-init`
 
 -   **`odev create -V <version> <database> [options]`**:
 
     -   Creates a new database and installs modules.
-    -   **MANDATORY**: You MUST always specify the Odoo version with `-V <version>`.
+    -   **MANDATORY**: You MUST always specify the Odoo version with `-V <version>` when creating a new database.
     -   **MANDATORY**: Use `-f` to force creation if the DB already exists.
     -   Use `-T` to create a template database (e.g., `odev create -f -T -V 17.0 my_template -i sale`).
     -   Use `-t <template>` to clone from a template (e.g., `odev create -f -t my_template -V 17.0 new_db`).
@@ -63,7 +65,7 @@ This skill provides instructions on how to use `odev` (Odoo Development CLI) dur
     -   **SURGICAL VERIFICATION**: You are ENCOURAGED to use this command to verify individual fixes, but ONLY with
         specific tags to keep it fast.
     -   **MANDATORY**: You MUST use `-t <tag>` or `--tags <tag>` to run ONLY the relevant failing test.
-    -   **Example**: `odev test -V 19.0 my_db -i my_module -t .test_some_method`
+    -   **Example**: `odev test my_db -i my_module -t .test_some_method`
     -   **Avoid Full Suites**: DO NOT run `odev test` without specific tags. Full module tests take too long and consume
         too many tokens. The host framework will run the full suite automatically after your session.
 
@@ -105,8 +107,8 @@ This skill provides instructions on how to use `odev` (Odoo Development CLI) dur
 
 -   **Speed up iteration**: Use template databases (`-T` and `-t`) to avoid reinstalling standard Odoo modules
     repeatedly.
--   **Strict Versioning**: Always pass the correct `-V` flag to ensure the right Odoo worktree and virtual environment
-    are used.
+-   **Strict Versioning**: Pass the `-V` flag when creating a database. For other commands, only use it if you need
+    to target a specific version that differs from the database default.
 -   **Prompt Bypassing**: Always use `-f` in scripts or automated tasks to ensure no interactive prompts block
     execution.
 
