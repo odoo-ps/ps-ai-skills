@@ -39,8 +39,8 @@ This skill provides a structured, step-by-step process for upgrading Odoo module
 
 ## 🧪 FINAL PHASE: Validation
 Once ALL modules have been upgraded:
-1. **Clean Validation**: Use `odev test --ai -V [target_ver] <test_db> -i [module_list]` to prove the upgrade works out-of-the-box on a fresh DB.
-2. **UI Verification**: Run `odev test --ai ... -t click_all` with headless flags to verify views and flows.
+1. **Clean Validation**: Use `odev test -V [target_ver] <test_db> -i [module_list]` to prove the upgrade works out-of-the-box on a fresh DB.
+2. **UI Verification**: Run `odev test ... -t click_all` with headless flags to verify views and flows.
 
 ## 📝 COMMIT GUIDELINES
 - One commit per discrete fix. **NO MASSIVE COMMITS**.
