@@ -34,6 +34,11 @@ Apply this workflow strictly for each module in the list:
 - **Data Migration Reflection**: If you modify models (renaming fields, changing types, deleting tables), assess the impact on production data. Use `odoo_upgrade_utils` to create `pre-migrate.py` or `post-migrate.py` if needed.
 - **Handling Removed/Deprecated Features**:
   - **REIMPLEMENT**: If a feature, method, field, model, or functionality was removed or deprecated in the target Odoo version, **do not** simply delete or disable it if it was being used. Instead, try to **reimplement** it or find an equivalent target Odoo API/mechanism to preserve the business logic and behavior.
+  - **The exception, and how to take it**: if the *concept* the customisation depends on is gone upstream — not just renamed or moved — reimplementing it is impossible and pretending otherwise ships dead code. In that case **delete the customisation outright** and cite, on the commit's `Source:` line, the upstream commit that removed the concept. Never leave a stub behind (see Override Boundaries below): a reviewer cannot tell an intentional removal from an accidental one without the citation, and will either restore broken code or spend a day re-deriving your conclusion.
+- **Override boundaries** (these fail *silently* — the module installs and tests stay green):
+  1. **Signature parity**: before editing an override, print the target's signature and match it exactly — `grep -rn "def <method>" <target_odoo_path>/addons/<app>/models/ -A3` for community, `<target_odoo_path>/../enterprise/<module>/models/` for enterprise (enterprise has no `addons/` level). Never add, drop, or rename a parameter you have not seen upstream: a forwarded keyword that does not exist upstream raises only on the code path that passes it.
+  2. **Never reduce an override to a bare `super()` call**, and never leave it as `pass`. Either keep working logic or delete the method entirely (with the citation above). A stub that keeps the signature and the docstring while dropping the body reads as intentional and silently removes a customer feature.
+  3. **Compute methods**: every `@api.depends` path must resolve on the model, and a stored compute must declare dependencies — an incomplete or invalid `depends` does not raise, the field just stops recomputing. In a compute loop assign to the loop variable, never to `self`.
 - **If an error occurs (Python, Security, etc.)**:
   1. **SEARCH origin**: Use `git log -S "..."`, `git log -L`, or `grep` in Odoo target source code to find the exact Commit Hash that introduced the Breaking Change.
   2. **FIX**: Correct the code in our module.
@@ -52,6 +57,70 @@ A migration is NEVER considered finished by testing only on the current working 
 2. **Install & Test**: Run `odev test -V [target_ver] <test_db> -i <module_name>`.
 3. **Handle Failures**: If this command fails, analyze the logs, fix the code, and **RESTART** the verification on a NEW clean database.
 
+### Step 5a: QWeb Report & Mail Template Render Gate - MANDATORY for any module shipping or extending reports / mail templates
+
+**WHY**: install, `--stop-after-init` and `odev test` never render a report or a mail body. Field and method references inside QWeb (`t-field`/`t-out`/`t-esc`/`t-foreach`) and inside `mail.template` bodies resolve **only at render time**, so a reference to something removed in the target version installs clean, tests green, and then raises `AttributeError` the first time a user prints or emails it in production. Step 5 does not cover this. Run against the already-populated upgrade `<db>` — no fresh database needed.
+
+**1. DISCOVERY** — enumerate every render-time artifact the module owns or extends:
+- Report templates: `grep -rnE '<template[^>]+id=' <module> --include="*.xml"`.
+- Inherited standard reports: `grep -rnE 'inherit_id="(sale|account|stock|purchase|mrp|hr_expense|point_of_sale|l10n_)' <module> --include="*.xml"`.
+- Report actions: `grep -rnE '<record[^>]+model="ir.actions.report"' <module> --include="*.xml"`.
+- Mail templates: `grep -rnE '<record[^>]+model="mail.template"' <module> --include="*.xml"` (audit `body_html` **and** `subject`).
+
+**2. STATIC FIELD-AUDIT against the TARGET source** — extract every field path used in those expressions (plus `o.`/`doc.`/`line.`/`object.` chains) and prove each still exists in the target source: `grep -rn "<field>" <target_odoo_path>/addons/<app>/models/`. No hit ⇒ the field is gone. **Adapt, never re-add a removed field.**
+
+**3. RENDER GATE** (no wkhtmltopdf needed, transaction rolled back). `ir.actions.report` and `mail.template` have no `module` column, so scope through `ir.model.data`. Pipe the script into the shell — `odoo-bin shell` execs stdin when it is not a TTY, which works on every version (`--shell-file` exists only from 19.0):
+
+```bash
+odev shell -V [target_ver] <db> --log-level=warn < /tmp/render_gate.py
+```
+
+```python
+imd, failures, rendered = env['ir.model.data'], [], 0
+
+# ir_ui_view.arch_db is a per-language jsonb column and a report renders in the
+# language the caller puts in context - for customer documents that is the
+# partner's. An en_US-only pass leaves a stale translated arch undetected: it
+# looks right locally and prints wrong in production.
+langs = env['res.lang'].search([]).mapped('code') or ['en_US']
+
+rids = imd.search([('module', '=', '<module>'), ('model', '=', 'ir.actions.report')]).mapped('res_id')
+for report in env['ir.actions.report'].browse(rids).exists():
+    # report_type is stored HYPHENATED: 'qweb-html' / 'qweb-pdf' / 'qweb-text'.
+    if (report.report_type or '').replace('-', '_') not in ('qweb_html', 'qweb_pdf'):
+        continue
+    recs = env[report.model].search([], limit=1)
+    if not recs:
+        print('SKIP report %s: no %s record' % (report.report_name, report.model)); continue
+    for lang in langs:
+        try:
+            # signature is (report_ref, docids, data=None); report_name is a valid report_ref
+            env['ir.actions.report'].with_context(lang=lang)._render_qweb_html(report.report_name, recs.ids)
+            rendered += 1
+        except Exception as e:  # AttributeError / KeyError => dead reference in the template
+            failures.append(('report:%s[%s]' % (report.report_name, lang), repr(e)))
+
+tids = imd.search([('module', '=', '<module>'), ('model', '=', 'mail.template')]).mapped('res_id')
+for tmpl in env['mail.template'].browse(tids).exists():
+    recs = env[tmpl.model].search([], limit=1) if tmpl.model else None
+    if not recs:
+        print('SKIP mail.template %s' % tmpl.name); continue
+    try:
+        tmpl._render_field('body_html', recs.ids)
+        rendered += 1
+    except Exception as e:
+        failures.append(('mail:%s' % tmpl.name, repr(e)))
+
+env.cr.rollback()  # leave NO trace in <db>
+if failures:
+    raise SystemExit('RENDER GATE FAILED: %s' % failures)
+print('RENDER GATE PASSED (%s renders, langs: %s)' % (rendered, ','.join(langs)))
+```
+
+- **A gate that tested nothing has not passed.** Always print the count. If the module ships reports or mail templates and `rendered` is 0, the `ir.model.data` scoping is wrong — investigate instead of accepting the pass.
+- Distinguish a genuine dead-reference `AttributeError` (real bug → adapt the template) from a record-specific or missing-context error (render against a fuller record).
+- **Commit** one atomic fix per discrete problem, with the originating Odoo SHA on the `Source:` line, and re-run until the gate prints PASSED.
+
 ### Step 6: Knowledge Base Synchronization (Final Phase)
 Once all modules from the list have passed Step 5:
 1. **Review History**: Run `git log --grep="\[UPG\]" --reverse` to review all changes and their sources across all upgraded modules.
@@ -66,4 +135,13 @@ Once all modules from the list have passed Step 5:
 - One commit per discrete fix. **NO MASSIVE COMMITS**.
 - **Format**: `[UPG][[task_id]] module_name: Concise description`
 - **Body**: Detailed description + **MANDATORY** Source (Odoo Commit SHA made clickable, PR, or Core path).
+- **The `Source:` SHA must be one you actually resolved**, never one you recall:
+  `git -C <target_odoo_path> cat-file -e <sha>^{commit}` (the Odoo checkouts sit *inside* the version
+  worktree directory — that directory is a container, not a repository). Quote the full 40-character
+  hash. If you cannot find the originating commit, write `Source: not identified` and name the core
+  file or symbol you compared against instead. **Never write a SHA you have not resolved**: an
+  unverifiable citation is worse than none, because the reviewer cannot tell a correct change from a
+  guess and will redo the work. `odev upgrade` rejects unresolvable citations in a post-flight gate.
+- **No unverified claims**: write "verified" / "tested" / "confirmed" only for a check you actually
+  ran, and name it. A manifest bump is a manifest bump.
 - **Ruff**: Run `ruff check <file> --select E999,F821,F822,F405` after Python edits. DO NOT fix unrelated style issues.
