@@ -1,7 +1,7 @@
 ---
 name: odoo-commit-message-guidelines
 description:
-    "Draft, rewrite, and validate Odoo-style commit messages using [TAG] module: summary format, 50/72 length limits,
+    "Draft, rewrite, and validate Odoo-style commit messages using [TAG][ID] module: summary format, 50/72 length limits,
     imperative English, WHY-first body, and correct tag selection. Includes optional migration tagging ([MIG]) when the
     project workflow (like OCA) uses it."
 metadata:
@@ -33,7 +33,7 @@ Use this skill when the user asks to:
 
 ## Required Inputs
 
-Collect before drafting: module name (or `various`), change intent, WHY rationale, and any references (`task-*`,
+Collect before drafting: module name(s), change intent, WHY rationale, and any references (`task-*`,
 `ticket-*`, `Fixes #`, `Closes #`, `opw-*`) or CI directives (`[NO CI]`).
 
 If inputs are missing, ask only the minimum concise follow-up questions.
@@ -43,7 +43,7 @@ If inputs are missing, ask only the minimum concise follow-up questions.
 Use this structure:
 
 ```text
-[TAG] module: short summary (ideally < 50 chars)
+[TAG][ID] module: short summary (ideally < 50 chars)
 
 WHY the change is needed.
 WHAT changed and technical choices (only if useful).
@@ -58,7 +58,8 @@ opw-789
 Rules:
 
 -   English only.
--   Header: `[TAG] module: imperative summary` (~50 chars).
+-   Header: `[TAG][ID] module: imperative summary` (~50 chars).
+-   `[ID]` is the task or ticket identifier (e.g. `[123]`, `[opw-456]`); omit if no ID is available.
 -   Tag must be uppercase, bracketed, and from `Tag Selection Rules`.
 -   Body wrapped at 72 chars; plain text (lists with `*`/`-`, no tables).
 -   Imperative present voice: `Fix`, `Remove`, `Add` (not past/third-person).
@@ -101,13 +102,17 @@ Decision guidance:
 ## Module Naming Rules
 
 -   Use technical module name, not marketing/functional display names.
--   If multiple modules are touched, list them briefly or use `various`.
 -   Prefer one logical change per commit and avoid large cross-module commits.
+-   For multiple modules, choose the pattern that keeps the header concise:
+    -   **2 modules:** list both — `module_a, module_b`
+    -   **Shared prefix:** use a glob — `prefix_*`
+    -   **Shared prefix with known variants:** use brace expansion — `prefix_(a,b,c)`
+    -   **Many unrelated modules:** list the primary one and append `, *`
 
 ## Good Examples
 
 ```text
-[FIX] website: remove unused alert div
+[FIX][22769] website: remove unused alert div
 
 Fix the look of input-group-btn.
 Bootstrap requires input-group-btn to be the first or last child.
@@ -118,14 +123,30 @@ Closes #22793
 ```
 
 ```text
-[FIX] various: resolve rounding issues in currency conversions
+[FIX][10928] account, account_accountant: resolve rounding issues in reports
 
-Address inconsistent decimal rounding behavior across multiple reporting
-and accounting modules. Instead of allowing components to do ad-hoc
-rounding, enforce standard decimal precision in the core tools.
+Address inconsistent decimal rounding behavior in both modules. Instead
+of allowing each report to do ad-hoc rounding, enforce standard decimal
+precision through a shared utility.
 
 ticket-10928
-[NO CI]
+```
+
+```text
+[IMP][8512] l10n_be_(hr_payroll,hr_payroll_account): add 2025 tax rates
+
+Update withholding tax tables and account mappings to reflect the 2025
+Belgian fiscal year changes.
+
+task-8512
+```
+
+```text
+[FIX] mrp, *: fix MO valuation rounding across costing methods
+
+Rounding was applied inconsistently depending on the costing method in
+use. Centralise the rounding call so all downstream modules behave the
+same way.
 ```
 
 ```text
@@ -136,7 +157,7 @@ load order control, and maintainability as the client grows.
 ```
 
 ```text
-[MIG] stock_account: migrate valuation hooks to 19.0
+[MIG][8421] stock_account: migrate valuation hooks to 19.0
 
 Align valuation hook signatures with 19.0 API to preserve extension
 compatibility and avoid runtime errors during upgrade.

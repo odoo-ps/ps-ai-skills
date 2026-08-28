@@ -7,43 +7,63 @@ description: "Expert workflow for Odoo module upgrades (Migration, Refactoring, 
 
 This skill provides a structured, step-by-step process for upgrading Odoo modules between versions.
 
+> [!IMPORTANT]
+> **CRITICAL - Feature Reimplementation Rule**:
+> If a feature, method, field, model, or functionality was removed or deprecated in the target Odoo version, **do not** simply delete or disable it if it was being used. Instead, you MUST try to **reimplement** it or find an equivalent target Odoo API/mechanism to preserve the business logic and behavior. Do not lose existing functionality during the upgrade.
+
 ## 🚀 UPGRADE WORKFLOW (Strict process for EACH module)
+
+Apply this workflow strictly for each module in the list:
 
 ### Step 1: Manifest & Preparation
 - **Update Version**: Set the version in `__manifest__.py` to `[target_ver].1.0.0`.
-- **Atomic Commit**: `[UPG][TASK_ID] <module_name>: bump version to [target_ver].1.0.0`
+- **Atomic Commit**: Commit the version bump immediately:
+  - **Message**: `[UPG][[task_id]] <module_name>: bump version to [target_ver].1.0.0`
 
 ### Step 2: Automatable Refactoring (XML Views)
-- **Convert Views**: Use `odev upgrade-code -V [target_ver] <db> --from [from_ver] --to [target_ver] --glob "<module>/**"`. 
-- This is the MANDATORY tool for XML migrations.
+- **Convert Views**: Use `odev upgrade-code -V [target_ver] <db> --from [from_ver] --to [target_ver] --glob "<module_name>/**"`. This is the MANDATORY tool for XML migrations.
+- **Atomic Commit**: Commit the XML syntax changes:
+  - **Message**: `[UPG][[task_id]] <module_name>: adapt XML views to Odoo [target_ver] syntax`
 
-### Step 3: Iterative Resolution (Python & Security)
+### Step 3: Iterative Resolution (Python, Security & Feature Reimplementation)
 - **Fail Fast (Static Validation)**: Before launching Odoo, validate your changes:
-  1. Python: `ruff check path/to/file.py --select E999,F821,F822,F405`.
+  1. Python: `ruff check path/to/file.py --select E999,F821,F822,F405`. DO NOT fix other lint errors.
   2. XML: `xmllint --noout path/to/file.xml`.
-- **Run Verification**: Launch `odev run -V [target_ver] <db> -i <module> --stop-after-init --log-level=warn`.
-- **Log Filtering**: If Odoo fails, use `grep -A 10 -B 10 "Traceback"` to extract only the relevant error.
-- **Data Migration**: Assess impact on production data. Load `odoo_upgrade_utils` for helpers.
-- **Functional Impact Analysis**: For every fix, determine the functional consequence.
-- **Iterative Fix**:
-  1. **SEARCH origin**: Use `grep` or `git log` in Odoo source to find the Breaking Change origin (Commit Hash).
-  2. **FIX**: Correct the code.
-  3. **ATOMIC COMMIT**: `[UPG][TASK_ID] module: description`.
-  4. **COMMIT BODY**: You MUST include the **clickable Odoo Commit SHA** (or PR/path) that introduced the change.
-- **Repeat** until the module installs and runs without errors.
+- **Run Verification**: Launch `odev run -V [target_ver] <db> -i <module_name> --stop-after-init`.
+- **Log Filtering**: If Odoo fails, DO NOT dump the full log. Use `grep -A 10 -B 10 "Traceback" <log_file>` or `tail -n 20` to extract only the relevant error.
+- **Data Migration Reflection**: If you modify models (renaming fields, changing types, deleting tables), assess the impact on production data. Use `odoo_upgrade_utils` to create `pre-migrate.py` or `post-migrate.py` if needed.
+- **Handling Removed/Deprecated Features**:
+  - **REIMPLEMENT**: If a feature, method, field, model, or functionality was removed or deprecated in the target Odoo version, **do not** simply delete or disable it if it was being used. Instead, try to **reimplement** it or find an equivalent target Odoo API/mechanism to preserve the business logic and behavior.
+- **If an error occurs (Python, Security, etc.)**:
+  1. **SEARCH origin**: Use `git log -S "..."`, `git log -L`, or `grep` in Odoo target source code to find the exact Commit Hash that introduced the Breaking Change.
+  2. **FIX**: Correct the code in our module.
+  3. **ATOMIC COMMIT**: Make a commit ONLY for this specific fix.
+     - **Format**: `[UPG][[task_id]] <module_name>: description`
+     - **Body**: You MUST include the Odoo Hash found (made clickable) and a brief explanation of the breaking change. This is MANDATORY as it will be used in the final synchronization step.
+- **Repeat** Step 3 until the module installs and runs without errors.
 
 ### Step 4: Module Closure
-- **Upgrade Bible**: Update `UPGRADE.md` with Technical Summary and Functional Testing scenarios. Document all technical changes and their functional impacts.
+- **Check Progress**: Mark the module as `[x]` in `TASKS.md`.
+- **Upgrade Log**: Update `UPGRADE.md` with a technical summary of changes, Odoo SHAs/PRs found, and functional testing scenarios.
+
+### Step 5: Final Validation (Clean Install & Tests) - MANDATORY
+A migration is NEVER considered finished by testing only on the current working database. You MUST prove that the module installs "out of the box" on a fresh environment:
+1. **Create a fresh DB**: `odev create -f -V [target_ver] <test_db> -i base`.
+2. **Install & Test**: Run `odev test -V [target_ver] <test_db> -i <module_name>`.
+3. **Handle Failures**: If this command fails, analyze the logs, fix the code, and **RESTART** the verification on a NEW clean database.
+
+### Step 6: Knowledge Base Synchronization (Final Phase)
+Once all modules from the list have passed Step 5:
+1. **Review History**: Run `git log --grep="\[UPG\]" --reverse` to review all changes and their sources across all upgraded modules.
+2. **Update Centralized Knowledge**: For each unique breaking change found in the history:
+   - Add/Update the entry in the knowledge table at `[k_path]/<module_name>/[from_ver]_to_[target_ver].md`.
+   - Format: `| Title | Explanation | Odoo Commit Hash |`.
+3. **Consistency**: Ensure the information in the centralized KB matches your final `UPGRADE.md` findings.
 
 ---
 
-## 🧪 FINAL PHASE: Validation
-Once ALL modules have been upgraded:
-1. **Clean Validation**: Use `odev test -V [target_ver] <test_db> -i [module_list]` to prove the upgrade works out-of-the-box on a fresh DB.
-2. **UI Verification**: Run `odev test ... -t click_all` with headless flags to verify views and flows.
-
-## 📝 COMMIT GUIDELINES
+## 📝 COMMIT GUIDELINES RECAP
 - One commit per discrete fix. **NO MASSIVE COMMITS**.
-- **Format**: `[UPG][TASK_ID] module_name: Concise description`
-- **Body**: Detailed description + **MANDATORY** Source (Odoo Commit SHA, PR, or Core path).
-- **Reasoning**: Keep internal reasoning brief.
+- **Format**: `[UPG][[task_id]] module_name: Concise description`
+- **Body**: Detailed description + **MANDATORY** Source (Odoo Commit SHA made clickable, PR, or Core path).
+- **Ruff**: Run `ruff check <file> --select E999,F821,F822,F405` after Python edits. DO NOT fix unrelated style issues.
