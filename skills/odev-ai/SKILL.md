@@ -18,6 +18,8 @@ For each component discovered during the analysis, the data must be mapped accor
 
 ### 1. Central Workspace (`presales.analysis`)
 * **Usage:** Main parent record. Initialize this record first to capture the main analysis workspace ID.
+* **Key Fields:** * `is_new_module`: (Boolean) Default assumption: the requirement is built as a new custom module. Set to `false` only when it genuinely extends a module that already exists and it makes sense to keep the change there rather than add a new module.
+    * `existing_module_name`: (String - Technical name) Required when `is_new_module` is `false`, naming the module being extended.
 
 ### 2. Business Logic & Python Workflows (`presales.business_flow_line`)
 * **Usage:** Used for custom methods, computation overrides, or major business workflows.
@@ -91,7 +93,7 @@ For each component discovered during the analysis, the data must be mapped accor
     * `description`: (Text)
 
 ### 9. Database Installation & Migration Hooks (`presales.script_line`)
-* **Usage:** Used for pre/post installation hooks, data migration paths, or optimization raw SQL scripts.
+* **Usage:** Used for pre/post installation hooks, data migration paths, or optimization raw SQL scripts that ship *inside the custom module itself*. Scope each line to what the hook's own code does (e.g. backfilling a field, scaffolding module-level tests) — never to hosting or deployment workflow (branch creation, builds, staging/production deployment). Those belong on the analysis as a whole, not on a script line, and only when the hosting rules call for stating them.
 * **Key Fields:** * `action`: `'pre_init_hook'` | `'post_init_hook'` | `'uninstall'` | `'post_hook'` | `'pre_migrate'` | `'post_migrate'` | `'end_migrate'` | `'sql'`
     * `model` | `field_name`: (String)
     * `estimated_time`: (Float)
