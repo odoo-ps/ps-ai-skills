@@ -1,5 +1,10 @@
 # Odoo Code Review Checklist
 
+**Scope**
+- [ ] The diff contains only what the task asked for — no drive-by reformatting, renaming or import reordering
+- [ ] No file was reformatted wholesale, and no formatter was run over files the change does not touch
+- [ ] `pre-commit` was run only because the repository commits a `.pre-commit-config.yaml`, and only with `--files`
+
 **General**
 - [ ] All identifiers, comments, and string literals are in English
 - [ ] Comments explain WHY, not WHAT — no comments describing what the code does

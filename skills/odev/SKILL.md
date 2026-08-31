@@ -40,6 +40,17 @@ This skill provides instructions on how to use `odev` (Odoo Development CLI) dur
    you are working in a custom folder, `odev` will often include it if it's detected as an addons path. Trust `odev` for
    the plumbing to avoid version mismatches.
 
+7. **PRE-COMMIT**: `odev pre-commit` copies a pre-commit configuration into a repository and installs its hooks.
+   **NEVER run it.** Adding pre-commit to a repository reformats the whole codebase the first time it runs, which is a
+   decision for the team that owns the code, not a side effect of a dev.
+
+    - If the repository already commits a `.pre-commit-config.yaml`, you may run `pre-commit` directly, and only over
+      the files you changed: `pre-commit run --files <changed files>`. **NEVER** `--all-files`.
+    - If it commits none, formatting is not enforced there: match the style of the file you are editing and run
+      nothing.
+    - The same holds for `ruff format`, `black` or `prettier` run by hand: your own files only, and only if the
+      repository already uses that tool.
+
 ## Core Commands
 
 -   **`odev run <database> [options]`**:
