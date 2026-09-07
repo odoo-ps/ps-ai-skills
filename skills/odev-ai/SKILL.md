@@ -12,6 +12,15 @@ Translate a technical analysis or functional specification into a precise and qu
 
 ---
 
+## Rules That Apply To Every Line
+
+* **Never write a line count in a `description`.** No "~40 LOC", no "about 30 lines of Python", no "≈ 3 files
+  of 20 lines". The line count is *derived* from `estimated_time`, never the reverse — restating it in the text
+  duplicates that computation and contradicts it the moment the estimate is adjusted. The description says what
+  is built and why; `estimated_time` alone carries the size.
+
+---
+
 ## Target Odoo Database Architecture Catalog
 
 For each component discovered during the analysis, the data must be mapped according to the strict models and fields defined below:
@@ -46,6 +55,12 @@ For each component discovered during the analysis, the data must be mapped accor
 
 ### 5. Database Fields Modifications (`presales.field_line`)
 * **Usage:** Used whenever custom fields are added or existing fields are extended.
+* **`action: 'studio'` depends on the hosting, and the prompt states which one applies:**
+    * **Odoo Online (SaaS):** allowed — a Studio field is a legitimate implementation there.
+    * **Odoo.sh / On-Premise:** not allowed. A Studio customisation that already exists in the database has to
+      be **migrated into code**: raise the field as `'add'` (or `'override'`) on the custom module, and estimate
+      the migration of the existing Studio field *and of the data it already holds* (a `presales.script_line`
+      with `'pre_migrate'` / `'post_migrate'`). Never leave a `'studio'` line on an Odoo.sh analysis.
 * **Key Fields:** * `model_type`: `'existing'` | `'new'`
     * `action`: `'add'` | `'override'` | `'studio'`
     * `field_name`: (String - Technical name)
@@ -94,6 +109,10 @@ For each component discovered during the analysis, the data must be mapped accor
 
 ### 9. Database Installation & Migration Hooks (`presales.script_line`)
 * **Usage:** Used for pre/post installation hooks, data migration paths, or optimization raw SQL scripts that ship *inside the custom module itself*. Scope each line to what the hook's own code does (e.g. backfilling a field, scaffolding module-level tests) — never to hosting or deployment workflow (branch creation, builds, staging/production deployment). Those belong on the analysis as a whole, not on a script line, and only when the hosting rules call for stating them.
+* **Prefer a migration script over an init hook.** `pre_init_hook` and `post_init_hook` are deprecated and are
+  the wrong default: use `'pre_migrate'` / `'post_migrate'` (or `'end_migrate'`) for anything touching existing
+  data — backfilling a field, renaming a model, moving Studio customisations into code. Pick an init hook only
+  where the work genuinely can run nowhere but the module's first install, and say why in the `description`.
 * **Key Fields:** * `action`: `'pre_init_hook'` | `'post_init_hook'` | `'uninstall'` | `'post_hook'` | `'pre_migrate'` | `'post_migrate'` | `'end_migrate'` | `'sql'`
     * `model` | `field_name`: (String)
     * `estimated_time`: (Float)
