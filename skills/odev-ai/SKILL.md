@@ -14,16 +14,33 @@ Translate a technical analysis or functional specification into a precise and qu
 
 ## Rules That Apply To Every Line
 
+* **A `description` says how the line is built, not why it is wanted.** It is the build instruction of
+  whoever implements it — a developer, or an AI generating the module from this analysis — and the
+  functional analysis is always delivered next to it. So write the technical *how*: the model and field it
+  lands on, the method overridden and what it does there, the view and the xpath, the domain, the file it
+  goes in, the order things happen in. Restating the requirement, justifying it or recalling the business
+  context is noise; so is repeating what the other fields of the line already carry. Nothing useful to add
+  means leaving it empty. Never quote the task or the board back at the reader ("gives the follow-up asked
+  for", "answers 'remove the SO information'", "as per the diagram") and never argue the design choice
+  ("dropped rather than transferred because..."): say what is built, and where a choice needs confirming
+  put it in the tab description instead.
+* **Nothing about the module itself is a line.** The scaffolding, the manifest, the development branch, the
+  build and the deployment are not lines of any tab — not a `presales.data_line` on `ir.module.module`, not
+  a script line. Ps-Tools derives `setup_time`, and `migration_time` when the analysis needs SH, from the
+  weight of the database; a line raised for any of it counts the same hours twice.
 * **Never write a line count in a `description`.** No "~40 LOC", no "about 30 lines of Python", no "≈ 3 files
   of 20 lines". The line count is *derived* from `estimated_time`, never the reverse — restating it in the text
-  duplicates that computation and contradicts it the moment the estimate is adjusted. The description says what
-  is built and why; `estimated_time` alone carries the size.
+  duplicates that computation and contradicts it the moment the estimate is adjusted. `estimated_time` alone
+  carries the size.
 
 ---
 
 ## Target Odoo Database Architecture Catalog
 
-For each component discovered during the analysis, the data must be mapped according to the strict models and fields defined below:
+For each component discovered during the analysis, the data must be mapped according to the strict models
+and fields defined below. `mcp__ps_tools__get_analysis_line_schema` reads the accepted fields and values off
+the live Ps-Tools models, so **it wins wherever it disagrees with this catalog**: what the catalog carries
+and the schema cannot is what each kind of line *means*, and what does not belong on it.
 
 ### 1. Central Workspace (`presales.analysis`)
 * **Usage:** Main parent record. Initialize this record first to capture the main analysis workspace ID.
@@ -48,7 +65,15 @@ For each component discovered during the analysis, the data must be mapped accor
     * `description`: (Text)
 
 ### 4. Initial / Demo Data (`presales.data_line`)
-* **Usage:** Used for required data files, CSV loads, or XML base records installation.
+* **Usage:** One data **file the module ships**, per target model: the records the development needs to work
+  — a sequence, a mail template, a server action, an automation rule, a system parameter, a default
+  configuration record — written as `<record>` in a file of the module's `data/` (or a `.csv` loaded by the
+  manifest) and installed with the code.
+* **Never a manual configuration or a process.** Not a setting somebody clicks in the interface, not a
+  procedure for a consultant or the client to follow, not a step to run by hand on the database. What
+  cannot be a data file the module installs is not a data line, and is not what the analysis delivers.
+* The `description` names the records the file creates and the values that matter (xml_id, the fields set,
+  the domain or the trigger of an automation), so the file can be written from it.
 * **Key Fields:** * `model`: (String - Target model string)
     * `estimated_time`: (Float)
     * `description`: (Text)
