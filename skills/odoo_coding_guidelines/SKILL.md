@@ -1,3 +1,10 @@
+---
+name: odoo_coding_guidelines
+description:
+    "Official Odoo coding standards for reviewing, checking, or writing Python, XML, JavaScript, and CSS/SCSS,
+    plus module structure and a full-review checklist."
+---
+
 # Odoo Coding Guidelines
 
 Use this skill when the user asks to **review, check, write, or validate Odoo code** against official coding standards.
