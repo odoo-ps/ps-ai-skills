@@ -49,9 +49,10 @@ cannot be met.
 ### Odoo.sh
 
 A custom module is deployable, and the estimate has to account for the branch, the build and the deployment of
-that module. Account for that **once** — its own line, or a caveat in the analysis — never folded into the
-description or estimate of an unrelated one: a `post_init_hook` stays scoped to what its code does, not to how
-the module reaches the client.
+that module. Account for that **once**, where the target has a place for it — the setup time of a record that
+carries one, a caveat where it does not — and never as a piece of the work itself: a build and a deployment are
+not a data file, not a script, and not a `post_init_hook`, which stays scoped to what its own code does rather
+than to how the module reaches the client.
 
 ### On-Premise
 
@@ -69,8 +70,19 @@ installed can be assumed. Say which assumption you had to make.
 
 ## What the analysis has to contain
 
-- Markdown, structured per functional requirement.
-- Per requirement: the impacted models and fields, the proposed implementation, and an estimate in hours.
+- One entry per functional requirement, never one block of prose covering all of them. Where the target
+  the prompt names has a structure of its own — the typed lines of a record, the fields of a tracker — write
+  the requirements into it; markdown is the shape only where it has none.
+- Per requirement: the impacted models and fields, how it is implemented, and an estimate in hours. The
+  analysis is read as a build plan — by the developer writing the module, or by an AI generating it — and
+  the functional analysis it was written from is always delivered next to it. So write the **how**: the
+  models and fields, the method to override and what it does there, the view and the node, the domain, the
+  file each thing goes in, the order things happen in. Why the client wants it is already written
+  elsewhere: restating the requirement, justifying it or recalling the business context is noise, and an
+  entry saying nothing the reader cannot see for themselves is better left empty.
+- Whatever the analysis calls data is data files the module ships — records in XML, installed with the
+  development that needs them. Configuration made by hand in the interface, or a procedure for somebody
+  to follow, is not what is built: it does not belong in the analysis.
 - Once, up front: whether this is a new custom module or a change to one that already exists. Read the source at
   hand rather than guessing. A new module is the default; name an existing one only when extending it genuinely
   makes more sense.
