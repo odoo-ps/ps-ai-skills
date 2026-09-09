@@ -46,6 +46,37 @@ Load the `odoo_saas_development` skill for the record shapes and the real limits
 here. Say so explicitly only for a requirement that genuinely needs loaded Python, which is the one thing that
 cannot be met.
 
+#### The logic budget, and when to stop and ask
+
+What a database on this hosting is worth keeping is its simplicity: it stays maintainable from Studio and the
+interface, and it upgrades on its own. Logic expressed as records — server actions, automation rules, sandboxed
+computes — is what erodes that, so it is budgeted. The prompt states the budget for this run; it is 10 hours
+where it says nothing.
+
+Count against the budget the hours of everything that is written **differently, or written at all, only because
+no Python is loaded**: server actions and their code, automation rules, computed and constrained fields in the
+sandbox, crons, and the `ir.model` / `ir.model.fields` records standing in for a class a module on Odoo.sh
+would simply declare.
+
+Do not count what a developer on Odoo.sh would have written the same way: views and QWeb, reports, SCSS,
+JavaScript and OWL components, and the data the module ships either way. Those are free here — a heavy interface
+on a light database is exactly what this hosting is for.
+
+**Stop and ask** — before writing the rest of the analysis — when either is true:
+
+- the counted logic goes over the budget;
+- meeting a requirement takes a workaround rather than an implementation: a chain of automation rules standing in
+  for one override, a cron polling for something an override would catch, a standard button rebound to a server
+  action, standard behaviour reimplemented because the standard method cannot be reached.
+
+Put the question to the developer with the figures behind it: which requirements push it over, the counted logic
+total against the budget, the workarounds SaaS forces and what each one costs in fragility, and what Odoo.sh
+would allow instead. Then wait. The hosting is the developer's call and the client's, never yours, and an
+analysis written past this point against the wrong one is work thrown away.
+
+If the run cannot take an answer, do not pick silently: write the analysis for SaaS as instructed, and open it
+with that same question and the same figures, so the hosting is settled before anything is built.
+
 ### Odoo.sh
 
 A custom module is deployable, and the estimate has to account for the branch, the build and the deployment of
@@ -67,6 +98,8 @@ installed can be assumed. Say which assumption you had to make.
   review overhead that per-line estimates alone tend to undercut. Raise the smallest item rather than inflating
   every one.
 - Estimate what has to be **built**. What Odoo already does is not work.
+- On Odoo Online, the logic hours carry a budget of their own on top of the total — see the hosting section
+  above, and ask before going over it.
 
 ## What the analysis has to contain
 

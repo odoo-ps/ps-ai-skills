@@ -15,6 +15,23 @@ business logic and can be deployed on managed/SaaS instances like Odoo.com.
 SaaS instances do **not** allow arbitrary Python code. Everything that would normally be a Python class, method, or
 field definition must instead be expressed as **XML data records**. JavaScript files are allowed.
 
+## Before Building: The Logic Budget
+
+A data-only module is worth building only while the database stays simple. Logic expressed as records — server
+actions, automation rules, sandboxed computes and constraints, crons, `ir.model` / `ir.model.fields` records
+standing in for a Python class — is budgeted at **10 hours** of development, unless the analysis or the prompt
+states another figure.
+
+What a developer would have written identically on Odoo.sh does not count: views and QWeb, reports, SCSS,
+JavaScript and OWL. A rich interface on a light database is what this hosting is for.
+
+Over the budget, or where a requirement needs a workaround rather than an implementation — a chain of automation
+rules standing in for one override, a cron polling for what an override would catch, a standard button rebound
+to a server action, standard behaviour reimplemented because the method cannot be reached — **stop and ask
+whether to move the development to Odoo.sh** before writing any of it. Show the logic total, the workarounds and
+what Odoo.sh would allow instead; the hosting is the developer's call. The `odoo_task_analysis` skill carries the
+same rule for the analysis that precedes the build.
+
 ## Module Structure
 
 ```
