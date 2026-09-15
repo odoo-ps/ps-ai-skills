@@ -64,10 +64,23 @@ The MCP connects to Chrome over the DevTools protocol (CDP). Before a browser se
 
    ```bash
    claude mcp add --scope user playwright -- \
-     npx @playwright/mcp@latest --cdp-endpoint http://localhost:9222
+     npx @playwright/mcp@latest --cdp-endpoint http://localhost:9222 \
+       --output-dir /tmp/playwright-mcp
    ```
 
 If any step fails, report exactly what is missing and the command to fix it before continuing.
+
+## Start Odoo (odev)
+
+The browser needs a server that keeps running, so this is the one case where `--stop-after-init`
+must be omitted — see the `odev` skill for every other command:
+
+```bash
+odev run <database> --http-port 8069 --log-level=warn &
+```
+
+Then browse `http://localhost:8069` (`admin` / `admin` on a local database). If the port is already
+taken, pick a free one and use it in every URL.
 
 ## Working method
 
