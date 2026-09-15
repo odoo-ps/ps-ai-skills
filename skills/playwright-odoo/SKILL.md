@@ -85,7 +85,8 @@ taken, pick a free one and use it in every URL.
 ## Working method
 
 1. Identify the goal, target URL, database, login state, and target menu/module.
-2. Navigate with `browser_navigate` and describe key actions as you perform them.
+2. Navigate with `browser_navigate`, then select the tab (`browser_tabs`) so it is in the
+   foreground — clicks time out on a background tab. Describe key actions as you perform them.
 3. Use `browser_snapshot` (structure) and `browser_take_screenshot` (visual) to confirm state.
 4. `browser_wait_for` before reading results — let pages, dialogs, and async UI settle.
 5. Report what you observed and whether the flow passed.
@@ -107,6 +108,17 @@ taken, pick a free one and use it in every URL.
 - **Observed**: result, errors, useful snapshot/screenshot
 - **Conclusion**: pass/fail and notes
 - **Next step**: fix or follow-up, if any
+
+## Troubleshooting
+
+- **Every click times out after 5 s** — the tab is in the background, so Chrome throttles
+  `requestAnimationFrame` and Playwright's "visible, enabled and stable" check never settles. Select
+  the tab first (`browser_tabs` action `select`), then click. Confirm with `document.visibilityState`.
+- **`400 Bad Request — Session expired (invalid CSRF token)` when logging in** — the browser profile
+  still holds a session cookie for a database that no longer exists. Open `/web/session/logout`, then
+  log in again.
+- **`File access denied: ... outside allowed roots`** — the MCP only writes to its `--output-dir` and
+  to the working directory. Save the artifact there, then move it where it belongs.
 
 ## Cleanup
 
