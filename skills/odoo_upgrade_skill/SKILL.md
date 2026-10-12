@@ -44,7 +44,7 @@ Apply this workflow strictly for each module in the list:
 
 ### Step 4: Module Closure
 - **Check Progress**: Mark the module as `[x]` in `TASKS.md`.
-- **Upgrade Log**: Update `UPGRADE.md` with a technical summary of changes, Odoo SHAs/PRs found, and functional testing scenarios.
+- **Upgrade Log**: Write `<module>/UPGRADE.md` in the format of the `odoo_upgrade_report` skill (`format.md`): a "For functional" half (what changes for users, test scenarios, decisions needed, manual checks required) and a "Technical log" half (changes with their Odoo SHAs, verification run, pre-existing issues). Commands you ran go in "Verification run", never in the test scenarios.
 
 ### Step 5: Final Validation (Clean Install & Tests) - MANDATORY
 A migration is NEVER considered finished by testing only on the current working database. You MUST prove that the module installs "out of the box" on a fresh environment:
