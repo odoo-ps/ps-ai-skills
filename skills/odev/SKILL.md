@@ -7,7 +7,7 @@ description:
 
 # ODEV Commands Skill
 
-This skill provides instructions on how to use `odev` (Odoo Development CLI) during upgrade tasks.
+This skill provides instructions on how to use `odev` (Odoo Development CLI).
 
 ## 🛑 MANDATORY RULES (ODEV CLI USAGE)
 
@@ -32,13 +32,16 @@ This skill provides instructions on how to use `odev` (Odoo Development CLI) dur
 5. **GLOB QUOTING**: When using `--glob`, you MUST ALWAYS wrap the pattern in double quotes to prevent the shell from
    expanding it before it reaches `odev`.
     - **Incorrect**: `odev upgrade-code --glob my_module/**/*`
-    - **MANDATORY**: You MUST always include `--stop-after-init` when using `odev run` or `odev deploy` for
-      verification. Failure to do so will cause the shell to hang.
+    - **Correct**: `odev upgrade-code --glob "my_module/**/*"`
+
 6. **ADDONS PATHS**: `odev` automatically manages Odoo and Enterprise addons paths based on the specified version
    (`-V`). You should **NEVER** manually specify standard Odoo paths (like `odoo/addons` or `enterprise`). `odev`
    handles this internally. Additionally, `odev` automatically includes the repository path of the targeted database. If
    you are working in a custom folder, `odev` will often include it if it's detected as an addons path. Trust `odev` for
    the plumbing to avoid version mismatches.
+
+7. **VERIFICATION RUNS**: You MUST always include `--stop-after-init` when using `odev run` or `odev deploy` for
+   verification. Failure to do so will cause the shell to hang.
 
 ## Core Commands
 

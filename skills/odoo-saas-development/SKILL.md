@@ -1,5 +1,5 @@
 ---
-name: odoo_saas_development
+name: odoo-saas-development
 description:
     "Rules for developing importable (data-only) Odoo modules with no custom Python, expressing models, fields,
     and logic as XML data records for deployment on managed/SaaS instances."
@@ -29,7 +29,7 @@ Over the budget, or where a requirement needs a workaround rather than an implem
 rules standing in for one override, a cron polling for what an override would catch, a standard button rebound
 to a server action, standard behaviour reimplemented because the method cannot be reached — **stop and ask
 whether to move the development to Odoo.sh** before writing any of it. Show the logic total, the workarounds and
-what Odoo.sh would allow instead; the hosting is the developer's call. The `odoo_task_analysis` skill carries the
+what Odoo.sh would allow instead; the hosting is the developer's call. The `odoo-task-analysis` skill carries the
 same rule for the analysis that precedes the build.
 
 ## Module Structure

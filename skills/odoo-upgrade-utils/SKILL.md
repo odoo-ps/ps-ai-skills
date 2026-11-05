@@ -1,5 +1,5 @@
 ---
-name: odoo_upgrade_utils
+name: odoo-upgrade-utils
 description:
     "Standard Odoo upgrade helpers for field/model renaming, XMLID management, and view patching. Essential for safe
     data migrations across Odoo versions."
@@ -42,4 +42,4 @@ consistent updates across the Odoo registry.
 -   **Module discovery**: Migration scripts should be placed in `<module>/migrations/<target_ver>/`.
 
 For more details, consult the
-[Odoo Upgrade Utils Documentation](https://www.odoo.com/documentation/18.0/th/developer/reference/upgrades/upgrade_utils.html).
+[Odoo Upgrade Utils Documentation](https://www.odoo.com/documentation/18.0/developer/reference/upgrades/upgrade_utils.html).

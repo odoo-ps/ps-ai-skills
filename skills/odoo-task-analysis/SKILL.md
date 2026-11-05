@@ -1,5 +1,5 @@
 ---
-name: odoo_task_analysis
+name: odoo-task-analysis
 description:
     "Method for analysing an Odoo task and estimating it: what to read before concluding, what each hosting
     allows, how to ground an estimate in a line count, and what the written analysis has to contain."
@@ -42,7 +42,7 @@ and fields, views, actions, `ir.model.access` and `ir.rule`, automation rules, c
 computed fields whose Python is `safe_eval`'d rather than loaded, reports, mail templates.
 
 The choice is therefore between Studio and a **data-only importable module** — never between Studio and nothing.
-Load the `odoo_saas_development` skill for the record shapes and the real limits before you estimate anything
+Load the `odoo-saas-development` skill for the record shapes and the real limits before you estimate anything
 here. Say so explicitly only for a requirement that genuinely needs loaded Python, which is the one thing that
 cannot be met.
 

@@ -1,5 +1,5 @@
 ---
-name: test_skill
+name: test-skill
 description: "AI Test Failure Resolution Rules for Odoo development."
 ---
 

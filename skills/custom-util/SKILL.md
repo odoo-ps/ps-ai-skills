@@ -1,5 +1,5 @@
 ---
-name: custom_util
+name: custom-util
 description:
     "PS-specific Odoo migration helpers for model/field renaming, Studio field transfers, and batch view updates,
     ensuring proper registry state management."

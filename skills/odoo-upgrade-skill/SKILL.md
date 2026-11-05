@@ -1,5 +1,5 @@
 ---
-name: odoo_upgrade_skill
+name: odoo-upgrade-skill
 description: "Expert workflow for Odoo module upgrades (Migration, Refactoring, Resolution)."
 ---
 
@@ -31,7 +31,7 @@ Apply this workflow strictly for each module in the list:
   2. XML: `xmllint --noout path/to/file.xml`.
 - **Run Verification**: Launch `odev run -V [target_ver] <db> -i <module_name> --stop-after-init`.
 - **Log Filtering**: If Odoo fails, DO NOT dump the full log. Use `grep -A 10 -B 10 "Traceback" <log_file>` or `tail -n 20` to extract only the relevant error.
-- **Data Migration Reflection**: If you modify models (renaming fields, changing types, deleting tables), assess the impact on production data. Use `odoo_upgrade_utils` to create `pre-migrate.py` or `post-migrate.py` if needed.
+- **Data Migration Reflection**: If you modify models (renaming fields, changing types, deleting tables), assess the impact on production data. Use `odoo-upgrade-utils` to create `pre-migrate.py` or `post-migrate.py` if needed.
 - **Handling Removed/Deprecated Features**:
   - **REIMPLEMENT**: If a feature, method, field, model, or functionality was removed or deprecated in the target Odoo version, **do not** simply delete or disable it if it was being used. Instead, try to **reimplement** it or find an equivalent target Odoo API/mechanism to preserve the business logic and behavior.
 - **If an error occurs (Python, Security, etc.)**:
